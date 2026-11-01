@@ -52,13 +52,14 @@ provenance: AI-authored, .opencode#2490; recomposition supersession, .opencode#2
    reviewer with no prior context on the plan reads it against the same
    reference and returns PASS or FAIL. On FAIL, revise the named findings in
    place and re-validate; the loop repeats until a zero-finding verdict, per
-   the reference's loop section. Short-path changes produce no plan and run
-   no dispatch.
+   the reference's loop section. A change on the short path — the path
+   [the change gate](../work/SKILL.md) defines — produces no plan and runs no
+   dispatch.
 8. Plans wait for the developer's authorization before `implement` when the
-   scope requires it; short-path changes execute directly under `work`. A
-   terminal-stage approval (`approved for pr`, `approved for
-   implementation`, …) from the vocabulary in `floor.md` carries the item
-   through plan into implement — the stage is not re-asked.
+   scope requires it; a change on the short path executes directly under the
+   [change gate](../work/SKILL.md). A terminal-stage approval (`approved for
+   pr`, `approved for implementation`, …) from the vocabulary in `floor.md`
+   carries the item through plan into implement — the stage is not re-asked.
 9. **Deprecation encounters at planning time.** Items touching a witnessed
    deprecation follow [the deprecation encounter protocol](../guidelines/deprecation-encounter-protocol.md):
    items never build new code on deprecated surface; an in-passing drop-in

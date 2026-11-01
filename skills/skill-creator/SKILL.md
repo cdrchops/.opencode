@@ -2,7 +2,7 @@
 name: skill-creator
 description: "Load before creating or editing ANY file under skills/, guidelines/, or floor.md — including adding or removing a rule, skill, artifact, or enforcement mechanism anywhere in the deck. Also load when writing or revising skill descriptions, or when deck content is found missing, stale, or conflicting. Enforces the admission gate, retirement gate, predicate classification, and vendor-card boundary. This card governs the deck itself."
 license: MIT
-provenance: AI-authored, .opencode#2490; .opencode#1925
+provenance: AI-authored, .opencode#2490; .opencode#1925; instruction-stated-detail-sourcing clause, #2657 (harness-as-placement-ground-truth observed 2026-10-31)
 ---
 
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
@@ -44,9 +44,32 @@ the session — carries its own observed-failure evidence and authorization; the
 gate governs agent-proposed deck content, not instruction execution. The gate's
 standards still bind the *content* of what is written (frontmatter, predicate
 classification, root-agnostic discipline hold), but the proposal-time evidence
-hunt does not re-run at instruction-execution time: never perform archaeology
-to manufacture evidence for an edit the developer just directed, and never
-halt for direction the instruction already carries.
+hunt does not re-run at instruction-execution time: the agent never performs
+archaeology to manufacture evidence for an edit the developer just directed,
+whether or not that edit's content leaves a material open choice.
+
+The no-halt clause is bounded. When a directed edit's content leaves a
+material open choice, the agent asks one open-ended question about that
+choice instead of choosing it. A detail the instruction already states —
+which card, which numbered position, which file, which form — is not an open
+choice, and not a research question either: its facts come from the
+instruction alone. The test harness's own scripts, another issue's records,
+and the deck's history are not sources for an instruction-stated detail —
+reading them to decide a placement the instruction resolved converts the
+hunt into the archaeology and the halt above (observed 2026-10-31,
+.opencode#2657: a directed "add rule 6" edit whose instruction stated the
+position drew the placement question twice more, the second time
+"harvesting" the behavioral scenario script as the placement's ground
+truth). The agent executes the stated detail as instructed, and a question
+about it is the
+halt the no-halt clause forbids (the directive is the edit's evidence, per
+the exemption above; observed 2026-10-30, .opencode#2657: a directed
+"add rule 6" edit whose instruction stated the position drew a history hunt
+and a positioning question). That question is this card's stage output: the
+deck-governance card is the gate for a deck edit, so the question is not a
+step toward the full path. Neither clause of the carve-out reaches a request
+that names a stage — the `work` card's stage rule governs such a request
+instead, and the named stage runs before the edit.
 
 ## Card standards
 

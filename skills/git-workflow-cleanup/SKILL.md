@@ -1,6 +1,6 @@
 ---
 name: git-workflow-cleanup
-description: "Load after any pull request merges — when the developer says \"pr merged\", \"merged\", or a merge event is otherwise confirmed. Verify the merge via the platform API, delete the feature branch (destructive-action gate applies on dispatched tasks), verify-and-sync issue closure from the PR body's closing keywords, sync the trunk, and remove work-state artifacts."
+description: "Load after any pull request merges — when the developer says \"pr merged\", \"merged\", or a merge event is otherwise confirmed. Verify the merge via the platform API, delete the feature branch (destructive-action gate applies on dispatched tasks), verify-and-sync issue closure from the PR body's closing keywords, sync the trunk, and remove the work record and the other work-state artifacts."
 license: MIT
 provenance: AI-authored, .opencode#2490; #1011 destructive-action gate; verify-and-sync closure, .opencode#2615; idempotent tag backstop at deletion, .opencode#2683; closing-keyword contract, .opencode#2658
 ---
@@ -52,7 +52,7 @@ provenance: AI-authored, .opencode#2490; #1011 destructive-action gate; verify-a
    on a dispatched task, the dispatch prompt must explicitly name the
    closure and its target (floor: destructive-action gate).
 4. **Sync the trunk** locally so the next branch starts from the tip.
-5. **Remove work-state artifacts** (work files, scratch state) so stale state
-   never misleads a later session.
+5. **Remove work-state artifacts** — the scratch files the agent created, the
+   work record among them — so stale state never misleads a later session.
 
 🤖 Co-authored with AI: OpenCode (huggingface/zai-org/GLM-5.3-Flash)

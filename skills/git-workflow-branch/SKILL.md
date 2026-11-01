@@ -28,8 +28,10 @@ provenance: AI-authored, .opencode#2490; submodule discipline rules, .opencode#2
    itself); (c) when the parent has nothing to contribute beyond pointer
    bumps, create no branch and make no commit — the drift rides with the next
    real parent change. Verify the trunk tip before branching — sync and rebase
-   if the trunk moved; state the verified tip in the work record. When scanning
-   branches, `issues-data` is a reserved orphan-branch issue-store ref, checked
+   if the trunk moved; state the verified tip in the work record, whose
+   provenance part the agent writes at this step, before the branch exists.
+   When scanning
+    branches, `issues-data` is a reserved orphan-branch issue-store ref, checked
    out in a linked worktree (the `+` marker in `git branch -a`) — never a
    feature-branch naming or cleanup candidate (#2548 C8). **Registration
    scope:** this sync applies to *registered* submodules — entries git's own
@@ -95,8 +97,9 @@ provenance: AI-authored, .opencode#2490; submodule discipline rules, .opencode#2
    agents never legitimately hold uncommitted content in nested submodule
    worktrees. The card prescribes no restore path: restoring nested submodule
    worktrees is not an agent operation.
-5. **Provenance.** Record branch, base tip, and the issue in the work state so
-   PR preparation can verify the chain later. **When the work has no issue,
+5. **Provenance.** Record branch, base tip, and the issue in the work record,
+   alongside the verified tip the trunk-freshness step wrote there, so PR
+   preparation can verify the chain later. **When the work has no issue,
    record branch and base tip only** — never create an issue, or initialize an
    issue store, to satisfy provenance; the record is input to PR prep, not a
    checklist that summons new machinery.

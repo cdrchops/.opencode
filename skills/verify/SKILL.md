@@ -13,7 +13,10 @@ provenance: AI-authored, .opencode#2490; #2518 criteria invariance; externally-d
 
 1. **Dispatch one reviewer.** Fresh context, budget comparable to the
    implementor. The reviewer reads the primary artifacts directly — spec/SCs,
-   the diff, the executed test output — not the implementor's summaries.
+   the diff, the executed test output — not the implementor's summaries. On
+   the short path, where no spec artifact exists, the scope statement in the
+   work record is the primary artifact, and the dispatch names the work
+   record's path so the reviewer reaches it.
 2. **The churn rule (include verbatim in the reviewer prompt):** *Flag only
    gaps that affect correctness or the stated requirements. A reviewer
    prompted to find gaps will always report some — do not chase style,
@@ -34,8 +37,10 @@ provenance: AI-authored, .opencode#2490; #2518 criteria invariance; externally-d
    the churn rule's "correctness" prong means the artifact's factual accuracy
    and the completeness of its impact enumeration; a code deliverable's prong
    keeps its existing meaning — the deliverable's behavior, and the defects
-   that affect correctness or the stated requirements. Record it once — chat
-   or PR description. No YAML artifact chains.
+   that affect correctness or the stated requirements. On the short path the
+   verdict unit is the scope statement's check — what "done" is verified
+   against — rather than a spec criterion. Record it once — chat or PR
+   description. No YAML artifact chains.
 4. **FAIL path.** Remediate → fresh re-review → repeat until a zero-finding
    verdict. A finding whose ground is an append-only record — a recorded
    historical event in a supervision ledger, determination record, or audit
@@ -109,10 +114,12 @@ provenance: AI-authored, .opencode#2490; #2518 criteria invariance; externally-d
    owning card's reference before judging — the artifact is measured against
    the bar its own producer card declares, not one invented at dispatch
    time. The spec card's
-   [validation standards](../spec/references/validation-standards.md) are
-   the criteria set for spec audits, and the plan card's
+   [validation standards](../spec/references/validation-standards.md) are the
+   criteria set for spec audits, and the plan card's
    [plan validation standards](../plan/references/plan-validation-standards.md)
-   are the criteria set for plan audits. This composes with criteria
+   are the criteria set for plan audits. The `work` card's criteria reference
+   — the scope statement's check — is the criteria set for a scope statement's
+   audit. This composes with criteria
    invariance: ownership names which declared set applies; invariance binds
    re-audits to that same set.
 10. **Artifact-presence gate.** An audit requires the audited artifact present
