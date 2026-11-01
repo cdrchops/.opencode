@@ -49,9 +49,29 @@ if texts:
     print("  " + texts[-1].replace("\n", "\n  ")[:600])
 PYEOF
 
+cat <<'NEXTCYCLE'
+=== BEFORE YOUR NEXT POLLING CYCLE — DO THIS FIRST, IN THIS ORDER ===
+  1. NOW: report THIS poll's analysis to the developer in a STANDALONE
+     text-only turn (opens "POLL <n>"; NO tool call in that turn).
+  2. THEN: launch the next polling cycle (sleep 60 + this script) as its
+     own turn. Text first, tool call second — never bundled.
+  Order and unbundled turns are enforced by the developer directive
+  2026-10-31: an analysis bundled with a tool call is undelivered.
+===============================================================
+NEXTCYCLE
+
 cat <<'REMINDER' >&2
 
-=== ORCHESTRATOR REMINDER (card §9, .opencode#2561; #2570) ===
+=== ORCHESTRATOR REMINDER (card §9, .opencode#2561; #2570; directive 2026-10-30; wording r2+r3 2026-10-31) ===
+TURN STRUCTURE, FIRST (the rule most often violated):
+  BAD:  analysis prose riding in the same turn as the next tool call.
+  GOOD: turn A — poll tool call (sleep 60 SECONDS, never longer;
+        the ≤60s floor is .opencode#2557), nothing else in the message;
+        turn B — ONLY the analysis text, opening "POLL <n>", no tool call;
+        turn C — next poll tool call (sleep 60 again).
+  A tool-call turn collapses in the developer's UI to the bare command line,
+  so analysis attached to any tool call is UNDELIVERED. Every poll's
+  analysis is turn B: text only. The cycle: poll → text turn → poll.
 This poll's evidence now requires YOUR semantic analysis. Deliver it NOW as
 an in-chat text update (plain text, no tool call attached to the analysis),
 stating:
@@ -61,10 +81,18 @@ stating:
   4. which hard-abort signals (tests-v2 AGENTS.md §14) have fired, if any.
 The update is MID-FLOW, never terminal: after delivering it, immediately
 issue the next poll cycle (sleep 60 + poll-run.sh) in the same working
-session. Do NOT end the turn, do NOT yield to the operator, do NOT wait for
-input — stopping after the update is itself the supervision defect this
+session. Do NOT end the workflow, do NOT yield to the operator, do NOT wait
+for input — stopping after the update is itself the supervision defect this
 reminder exists to prevent. Ordering rule stands: the update text comes
 before the next poll call — never chain a tool call before delivering it.
+Delivery rule (developer directive 2026-10-30): the update
+is a STANDALONE TURN — a turn whose entire content is the analysis text,
+with NO tool call attached. Tool-call turns collapse in the developer's UI
+to the bare command line, so an analysis riding in the same message as a
+tool call never reaches the developer — an update delivered in a tool-call
+turn is an undelivered update, whatever the supervisor's transcript shows.
+The cycle is therefore: poll tool call (alone in its turn) → text-only
+update turn → next poll tool call.
 This reminder is emitted on stderr as well as stdout so it survives output
 filtering — filtering or truncating poll output is itself a supervision
 defect; never pipe poll output through grep/head/tail.
@@ -73,7 +101,16 @@ REMINDER
 
 cat <<'REMINDER'
 
-=== ORCHESTRATOR REMINDER (card §9, .opencode#2561; #2570) ===
+=== ORCHESTRATOR REMINDER (card §9, .opencode#2561; #2570; directive 2026-10-30; wording r2+r3 2026-10-31) ===
+TURN STRUCTURE, FIRST (the rule most often violated):
+  BAD:  analysis prose riding in the same turn as the next tool call.
+  GOOD: turn A — poll tool call (sleep 60 SECONDS, never longer;
+        the ≤60s floor is .opencode#2557), nothing else in the message;
+        turn B — ONLY the analysis text, opening "POLL <n>", no tool call;
+        turn C — next poll tool call (sleep 60 again).
+  A tool-call turn collapses in the developer's UI to the bare command line,
+  so analysis attached to any tool call is UNDELIVERED. Every poll's
+  analysis is turn B: text only. The cycle: poll → text turn → poll.
 This poll's evidence now requires YOUR semantic analysis. Deliver it NOW as
 an in-chat text update (plain text, no tool call attached to the analysis),
 stating:
@@ -83,10 +120,18 @@ stating:
   4. which hard-abort signals (tests-v2 AGENTS.md §14) have fired, if any.
 The update is MID-FLOW, never terminal: after delivering it, immediately
 issue the next poll cycle (sleep 60 + poll-run.sh) in the same working
-session. Do NOT end the turn, do NOT yield to the operator, do NOT wait for
-input — stopping after the update is itself the supervision defect this
+session. Do NOT end the workflow, do NOT yield to the operator, do NOT wait
+for input — stopping after the update is itself the supervision defect this
 reminder exists to prevent. Ordering rule stands: the update text comes
 before the next poll call — never chain a tool call before delivering it.
+Delivery rule (developer directive 2026-10-30): the update
+is a STANDALONE TURN — a turn whose entire content is the analysis text,
+with NO tool call attached. Tool-call turns collapse in the developer's UI
+to the bare command line, so an analysis riding in the same message as a
+tool call never reaches the developer — an update delivered in a tool-call
+turn is an undelivered update, whatever the supervisor's transcript shows.
+The cycle is therefore: poll tool call (alone in its turn) → text-only
+update turn → next poll tool call.
 This reminder is emitted on stderr as well as stdout so it survives output
 filtering — filtering or truncating poll output is itself a supervision
 defect; never pipe poll output through grep/head/tail.

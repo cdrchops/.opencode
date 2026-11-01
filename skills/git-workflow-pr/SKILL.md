@@ -21,10 +21,14 @@ provenance: AI-authored, .opencode#2490; submodule discipline rules, .opencode#2
    merge-boundary workflow and this PR covers exactly its spec-assigned
    scope — the invariant still applies to the final PR. Also required:
    verify pass PASS on the deliverable's SCs; structural checks
-   (lint/typecheck/build) ran clean. Not ready → `verify` first, not a PR.
+   (lint/typecheck/build) ran clean. On the short path, where no spec
+   artifact exists, the assigned scope and the deliverable's SCs are the
+   scope statement's scope and its check. Not ready → `verify` first, not a
+   PR.
 2. **Pre-create checklist — every item before `gh pr create` / `gb` create.**
-(a) every item assigned to this PR by the spec or by recorded special
-authorization has an implementation commit or an explicit N/A; (b) the full
+   (a) every item assigned to this PR by the spec or by recorded special
+   authorization has an implementation commit or an explicit N/A — on the
+   short path, the assignment is the scope statement; (b) the full
 test suite ran **green** this session with captured output — red output
 blocks PR creation until every failure is remediated or dispositioned via a
 filed fix issue; "the failures pre-existed" is a defect to file, never a
@@ -38,7 +42,8 @@ filed fix issue; "the failures pre-existed" is a defect to file, never a
    The filed-fix-issue branch stays the route for failures whose remedy
    requires implementation authorization — any change outside the issue
    stores; (c) fresh-context
-   `verify` PASS recorded against the issue's spec. Any failure → halt and
+   `verify` PASS recorded against the issue's spec — on the short path, the
+   PASS is recorded against the scope statement. Any failure → halt and
    report the gap — never create the PR anyway.
    (d) **Submodule pointer inclusion:** a parent-repo PR includes pending
    submodule pointer bumps — a bump exists when the submodule's checked-out
@@ -143,13 +148,15 @@ filed fix issue; "the failures pre-existed" is a defect to file, never a
    - `## Evidence` (required) — real executed output: test results with
      actual numbers, the fresh-context verify verdict, structural gate
      results. Assertions in place of output are not accepted.
-    - `## Submodule bump` — required exactly when the PR carries pointer
-      bumps, omitted otherwise. Per bump: the old→new SHA, the pushed
-      hash-permanence tag naming the new SHA
-      (`<parent-repo>/<issue-number>-<submodule-dir>` — named for each bump,
-      per the `git-workflow-branch` rule 3 discipline), the submodule
-      PRs/issues it delivers (one line each), and the effect on the project.
-   - `## Provenance` — spec path, verify record; byline footer.
+   - `## Submodule bump` — required exactly when the PR carries pointer
+     bumps, omitted otherwise. Per bump: the old→new SHA, the pushed
+     hash-permanence tag naming the new SHA
+     (`<parent-repo>/<issue-number>-<submodule-dir>` — named for each bump,
+     per the `git-workflow-branch` rule 3 discipline), the submodule
+     PRs/issues it delivers (one line each), and the effect on the project.
+   - `## Provenance` — spec path, verify record; on the short path, the
+     scope statement's content in place of the spec path, because the work
+     record is transient and the cleanup card deletes it; byline footer.
    - **Anti-bloat:** no attestation boilerplate, no evidence-taxonomy
      tables, no artifact-chain output. A normal body fits ~30 lines;
      longer requires justification (release PRs exempt as
