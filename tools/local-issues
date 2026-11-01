@@ -2170,30 +2170,52 @@ def cmd_sync(args: argparse.Namespace) -> None:
 
 
 def _resolve_worktree_from_path(file_path: str) -> tuple[Path, str, str] | None:
-    """Resolve the correct repo worktree from a file path prefix.
+    """Resolve the correct repo worktree from a file path or qualified form.
+
+    Accepted forms (#2655), in precedence order:
+    1. Qualified issue form — ``repo#N`` (whole issue folder) or
+       ``repo#N/<relpath>`` (single file).
+    2. Repo-root-relative issues-worktree path — ``repo/.issues/<path>``;
+       candidates are the tool's own repo enumeration (current repo first,
+       then registered store hosts — #2667), first match wins. The two
+       legacy cwd-pinned shapes (``.issues/…``, ``.opencode/.issues/…``)
+       are instances of this general rule.
 
     Returns (repo_path, repo_name, relative_file_path) or None if no match.
     """
-    abs_path = Path(file_path).resolve()
+    stripped = file_path.strip()
     current = Path(os.getcwd()).resolve()
 
-    # Check .opencode/.issues/ prefix → .opencode repo
-    opencode_issues = current / ".opencode" / ".issues"
-    try:
-        rel_to_issues = abs_path.relative_to(opencode_issues)
-        opencode_repo = current / ".opencode"
-        if opencode_repo.is_dir():
-            return (opencode_repo, ".opencode", str(rel_to_issues))
-    except ValueError:
-        pass
+    # Qualified form: repo#N or repo#N/<relpath> — takes precedence (R-1).
+    qual_match = re.match(r"^(.+?)#(\d+)(?:/(.+))?$", stripped)
+    if qual_match:
+        repo_name, number = qual_match.group(1), qual_match.group(2)
+        suffix = qual_match.group(3)
+        if repo_name == current.name:
+            repo_path = current
+        else:
+            repo_path = next(
+                (child.resolve() for child in _discover_all_repos()
+                 if child.name == repo_name),
+                None,
+            )
+        if repo_path is None:
+            print(f"Error: repo '{repo_name}' not found.", file=sys.stderr)
+            _print_available_repos()
+            sys.exit(1)
+        rel_path = f"{number}/{suffix}" if suffix else number
+        return (repo_path, repo_name, rel_path)
 
-    # Check .issues/ prefix → root repo
-    root_issues = current / ".issues"
-    try:
-        rel_to_issues = abs_path.relative_to(root_issues)
-        return (current, current.name, str(rel_to_issues))
-    except ValueError:
-        pass
+    # Enumerated path resolution (R-2): current repo first, then children.
+    abs_path = Path(stripped).resolve()
+    for candidate in [current] + [child.resolve() for child in _discover_all_repos()]:
+        candidate = candidate.resolve()
+        issues_dir = candidate / ISSUES_DIR
+        try:
+            rel_to_issues = abs_path.relative_to(issues_dir)
+        except ValueError:
+            continue
+        return (candidate, candidate.name, str(rel_to_issues))
 
     return None
 
@@ -2274,13 +2296,22 @@ def _sync_file_in_worktree(
     return result
 
 
+# One shared statement of the accepted --file form classes (R-3): feeds both
+# the mismatch error message and the --file help text so the two cannot drift.
+_SYNC_FILE_FORMS = (
+    "qualified issue-folder form (repo#N), qualified issue-file form "
+    "(repo#N/<relpath>), or repo-root-relative issues-worktree path "
+    "(repo/.issues/<path>)"
+)
+
+
 def cmd_sync_file(args: argparse.Namespace) -> None:
     """Commit and push a single file in the correct repo's issues worktree."""
     resolved = _resolve_worktree_from_path(args.file)
     if resolved is None:
         print(
-            f"Error: file path '{args.file}' does not match any known issues worktree "
-            f"(.issues/ or .opencode/.issues/)",
+            f"Error: file path '{args.file}' does not match any known issues worktree — "
+            f"accepted forms: {_SYNC_FILE_FORMS}",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -2453,7 +2484,7 @@ def _add_sync_file_parser(subparsers: argparse._SubParsersAction) -> None:
         "sync-file",
         help="Commit and push a single file in the correct repo's issues worktree. Flags: --file, --message",
     )
-    p.add_argument("--file", type=str, required=True, help="Path to the file to sync")
+    p.add_argument("--file", type=str, required=True, help=f"File to sync: {_SYNC_FILE_FORMS}")
     p.add_argument("--message", type=str, default=None, help="Commit message (auto-generated if omitted)")
 
 
