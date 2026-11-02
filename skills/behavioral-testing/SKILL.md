@@ -2,7 +2,7 @@
 name: behavioral-testing
 description: "Load for ANY opencode behavior testing — running a behavioral SC, verifying agent behavior, executing or monitoring an `opencode run`, evaluating session evidence, or deciding how to produce behavioral evidence at all. Also load when a spec SC is classified behavioral, when a test scenario script under tests-v2/ is authored or run, when a behavioral test needs a real remote API (the harness provisions a self-contained GitBucket container — §12), or when a behavioral run stalls, times out, or fails. Routes to the tests-v2 behavioral harness — never an ad-hoc `opencode run`."
 license: MIT
-provenance: AI-authored, .opencode#2517; #2538 isolation mandate + evaluator contract restored from pre-rip deck; #2570 supervision-cycle absoluteness + no-output-filtering; one-update-per-poll no-gaps clause, .opencode#2683; standalone-update-turn rule, developer directive 2026-10-30; wording r2 (BAD/GOOD turn shapes + all-polling-loops scope), developer directive 2026-10-31; cadence 60s into the shape block, developer directive 2026-10-31
+provenance: AI-authored, .opencode#2517; #2538 isolation mandate + evaluator contract restored from pre-rip deck; #2570 supervision-cycle absoluteness + no-output-filtering; one-update-per-poll no-gaps clause, .opencode#2683
 ---
 
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
@@ -121,26 +121,6 @@ provenance: AI-authored, .opencode#2517; #2538 isolation mandate + evaluator con
    intervening text update in between, is the defect in the supervisor's own
    transcript, regardless of what the analysis concluded and regardless of
    content; the skipped-update failure is self-observable in that shape.
-   **The update is a STANDALONE turn (developer directive 2026-10-30, wording
-   r2 2026-10-31):** the analysis text is issued in a turn with no tool call
-   attached — never as prose preceding the next poll call in the same
-   message. The transcript shapes, concretely:
-   - BAD: one message carrying prose + the next `sleep`/`poll-run.sh` tool
-     call (or any other tool call) — the analysis in it is undelivered.
-   - GOOD: turn A — the poll tool call, alone (its sleep is **60 seconds —
-     never longer**; the ≤60 s cadence floor is .opencode#2557); turn B —
-     only the analysis text, opening `POLL <n>`; turn C — the next poll
-     tool call (sleep 60 again).
-   This binds EVERY supervised polling loop, not only behavioral runs —
-   structural suite supervision (e.g. watching `test-enforcement.sh`
-   progress) uses the same turn shapes even when `poll-run.sh` is not the
-   polling instrument, because the reminder text cannot fire there; the
-   card clause is the anchor in that case. Tool-call turns collapse in the
-   developer's UI to the bare
-   command line, so an analysis riding in the same message as a tool call
-   never reaches the developer; an update delivered inside a tool-call turn
-   is an undelivered update, whatever the supervisor's own transcript shows
-   — this riding form is the recurring regression the rule names.
    **Never kill by name pattern.** Run cleanup and abort kill only the PIDs the
    agent itself launched — record the PID at launch and re-verify survivors by
    PID (`kill -9 <pid>`, `ps -p <pid>`), never by a name match. A pattern kill

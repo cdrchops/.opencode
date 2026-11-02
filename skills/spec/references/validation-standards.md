@@ -1,6 +1,6 @@
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
 <!-- SPDX-License-Identifier: MIT -->
-<!-- Provenance: AI-authored, .opencode#2550; criteria-depth restoration, .opencode#2601; spin-bounded loop, .opencode#2606; state-decidability class, .opencode#2646; non-convergence judgment, count trigger, re-evaluation outcomes, finding bar, validation record, .opencode#2660; deliverable-on-trunk exit reconciliation duty, .opencode#2702 -->
+<!-- Provenance: AI-authored, .opencode#2550; criteria-depth restoration, .opencode#2601; spin-bounded loop, .opencode#2606; state-decidability class, .opencode#2646; non-convergence judgment, count trigger, re-evaluation outcomes, finding bar, validation record, .opencode#2660 -->
 
 # Validation Standards
 
@@ -185,13 +185,6 @@ FAIL → revise the named findings in the artifact in place → re-validate. The
 revise → re-validate cycle repeats until a verdict with zero findings.
 Findings are never negotiated away — each revision genuinely fixes every
 named finding.
-
-A cycle whose executed evidence independently verifiably shows the owning
-issue's deliverables already delivered on trunk — no pending work — exits
-with a reconciliation duty, not a silent PASS: the running agent reconciles
-the owning ticket in the same workflow per
-[the issues skill's §5 closure triage](../issues/SKILL.md) — triage verdict,
-local state update, remote closure.
 
 Each cycle, the agent running the loop judges — never a script — whether the
 loop is spinning: findings recurring or reshuffling without genuine resolution

@@ -2,7 +2,7 @@
 name: gradle
 description: "Load when building, packaging, or configuring the project through Gradle — running builds, assembling distributable artifacts such as fat jars, and deciding what those artifacts contain, including the service registrations that must survive aggregation. Java language conventions belong to `java`."
 license: MIT
-provenance: AI-authored, .opencode#2557; build-execution exclusivity + failure disposition, .opencode#2654
+provenance: AI-authored, .opencode#2557
 ---
 
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
@@ -24,14 +24,6 @@ code, and a future Kotlin/Scala card would need it.
 - When the repository has no wrapper, the canonical command comes from the
   repo's declared build manifest — ask when the manifest does not declare it;
   never guess.
-- Build execution is exclusive to the wrapper (or, wrapperless, the
-  declared-framework command): an alternative Gradle distribution, a bare
-  `gradle`, a sibling wrapper, or any ad-hoc binary gradle invocation is
-  prohibited — including when the wrapper's own build invocation just failed;
-  the failed invocation is never an authorization for a substitute toolchain.
-- When the sanctioned workflow's failure is verified, the disposition is
-  report-with-evidence-and-halt (a cannot-continue state) or routing to the
-  owning ticket — never invoking a different build toolchain.
 
 ## Canonical-command sourcing
 
