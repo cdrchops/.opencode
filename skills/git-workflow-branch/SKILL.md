@@ -104,6 +104,11 @@ provenance: AI-authored, .opencode#2490; submodule discipline rules, .opencode#2
    issue store, to satisfy provenance; the record is input to PR prep, not a
    checklist that summons new machinery.
 6. **Trunk protection.** The trunk commit/push check is enforced mechanically;
-   treat any block as the hard boundary it is.
+   the agent treats any block as the hard boundary it is. The
+   check is the prohibition's backstop, not its source: the branch-first
+   prohibition — never commit directly to the trunk-identified primary
+   branch — holds unconditionally in every repository; the absence of the
+   hook (or of any mechanical check) is not a trunk-commit exemption, and
+   the discipline does not depend on the block firing.
 
 🤖 Co-authored with AI: OpenCode (huggingface/zai-org/GLM-5.3-Flash)
