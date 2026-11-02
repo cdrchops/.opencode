@@ -7,7 +7,7 @@ provenance: AI-authored, .opencode#2490; tooling contract consolidated per .open
 
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
 <!-- SPDX-License-Identifier: MIT -->
-<!-- Provenance: AI-authored, .opencode#2490; .opencode#2543; .opencode#2561 verified-resolved closure; ticket-state hygiene, .opencode#2563; mirror-repair + pointer check, .opencode#2597; local/remote boundary + §7 routing correction, .opencode#2382; recomposition protocol, .opencode#2661; self-triggering triage, .opencode#2699 -->
+<!-- Provenance: AI-authored, .opencode#2490; .opencode#2543; .opencode#2561 verified-resolved closure; ticket-state hygiene, .opencode#2563; mirror-repair + pointer check, .opencode#2597; local/remote boundary + §7 routing correction, .opencode#2382; recomposition protocol, .opencode#2661; self-triggering triage, .opencode#2699; self-firing evidence trigger + ticket-status semantics, .opencode#2702 -->
 
 # issues — issue operations
 
@@ -95,15 +95,25 @@ provenance: AI-authored, .opencode#2490; tooling contract consolidated per .open
      is the loop rule's structural re-evaluation's judgment; this protocol
      governs the split's mechanics, recording, authorization, notification,
      review shape, and closure.
-5. **Closure.** Issue closure follows delivered work (post-merge cleanup), an
+ 5. **Closure.** Ticket-status semantics: `open` marks a ticket with pending
+    work; `closed` marks a ticket with none. The `needs-approval` label marks
+    content awaiting developer approval and is removed on approval or
+    supersession — a verified-complete deliverable never keeps it. Issue
+    closure follows delivered work (post-merge cleanup), an
    evidence-backed verified-resolved/moot triage verdict, or explicit
    developer instruction — never closure to tidy up. The triage path is
    self-triggering: when a ticket's deliverables are verifiably complete on
    dated evidence (executed instrument outputs matching the ticket's
    success-criteria outcomes) and the developer names that state or asks why
-   the ticket remains open, the agent runs the evidence-backed triage and
-   reconciles the tracker to the verdict in the same workflow — it does not
-   re-explain the closure gate and wait. The closure bar is executed
+    the ticket remains open, the agent runs the evidence-backed triage and
+    reconciles the tracker to the verdict in the same workflow — it does not
+    re-explain the closure gate and wait. The same trigger is self-firing on
+    the agent's own discovery: when a validation or audit session's executed
+    evidence independently verifiably shows the ticket's deliverables
+    complete on trunk — no pending work — the agent running that session
+    records the verdict grounds and performs the same reconciliation (local
+    state update and remote-tracker closure) in the same workflow, without
+    waiting for the developer to name the state. The closure bar is executed
    evidence; closure to tidy up stays prohibited. A verdict-backed closure
    reconciles the remote tracker to the same closed state in the same
    workflow; the local store is authoritative (#2561).
