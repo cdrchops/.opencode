@@ -666,10 +666,15 @@ determination_record:
   recorded_at: ${timestamp}
   # Append-only lifecycle sections — future fields are allowed by appending
   # list items (never by rewriting recorded fields):
-  #   false_signal_annotations — .opencode#2456 SC-10 monitor false-signal annotations
-  #   orchestrator_decisions   — .opencode#2456 SC-7 recorded orchestrator decisions
+  #   false_signal_annotations  — .opencode#2456 SC-10 monitor false-signal annotations
+  #   orchestrator_decisions    — .opencode#2456 SC-7 recorded orchestrator decisions
+  #   run_outcome_observations  — .opencode#2649 R-3 machine-run-outcome observations
+  #                               (machine paths record observations only —
+  #                               decision authorship stays with the
+  #                               orchestrator)
   false_signal_annotations: []
   orchestrator_decisions: []
+  run_outcome_observations: []
 DET.EOF
 }
 
@@ -735,6 +740,72 @@ __fold_false_signal() {
     return $?
 }
 
+# .opencode#2649 R-3: machine run-outcome observation appender. Records the
+# halt-class run outcome (exit code + evidence pointers) as a MACHINE
+# OBSERVATION on the determination record's run_outcome_observations list —
+# append-only semantics identical to __fold_false_signal (the declared-empty
+# "[]" seed is replaced only by the act of appending; recorded fields are
+# never rewritten). Machine paths never author or rewrite an orchestrator
+# decision value (no 'decision:' entry is appended by this or any other
+# machine path — .opencode#2649 R-3); the decision list awaits an actual
+# orchestrator-recorded entry made through __record_orchestrator_decision.
+# Invoked by the halt-class outcome-recording path in behavior_run:
+#   __record_run_outcome <artifact_dir> <exit_code>
+__record_run_outcome() {
+    local artifact_dir="$1"
+    local exit_code="$2"
+    local det="$artifact_dir/determination.yaml"
+    if [ ! -f "$det" ]; then
+        det=$(ls "$artifact_dir"/*/determination.yaml 2>/dev/null | head -1 || true)
+    fi
+    if [ -z "$det" ] || [ ! -f "$det" ]; then
+        echo "HARNESS_FAILURE: __record_run_outcome no determination record found under $artifact_dir (R-3 observation appender requires a determination record)" >&2
+        return 1
+    fi
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)
+    local entry="    - observed_exit_code: ${exit_code}"
+    entry="${entry}
+      evidence: stdout.log/stderr.log/monitor.log of ${artifact_dir}"
+    entry="${entry}
+      observed_at: ${timestamp}"
+    local tmpf
+    tmpf="$det.roo.$$"
+    RUN_OUTCOME_ENTRY="$entry" awk '
+        BEGIN { ent = ENVIRON["RUN_OUTCOME_ENTRY"] }
+        function flush_ent(    n, i, A) {
+            n = split(ent, A, "\n")
+            for (i = 1; i <= n; i++) print A[i]
+        }
+        { lines[NR] = $0 }
+        END {
+            emitted = 0
+            for (r = 1; r <= NR; r++) {
+                line = lines[r]
+                if (!emitted && line == "  run_outcome_observations: []") {
+                    print "  run_outcome_observations:"
+                    flush_ent()
+                    emitted = 1
+                    continue
+                }
+                print line
+                if (!emitted && line == "  run_outcome_observations:") {
+                    r++
+                    while (r <= NR && lines[r] ~ /^    /) { print lines[r]; r++ }
+                    flush_ent()
+                    emitted = 1
+                    r--
+                }
+            }
+            if (!emitted) {
+                printf "HARNESS_FAILURE: no run_outcome_observations field in %s (R-3 observation appender requires the determination-record schema)\n", FILENAME > "/dev/stderr"
+                exit 1
+            }
+        }
+    ' "$det" > "$tmpf" && mv "$tmpf" "$det"
+    return $?
+}
+
 # .opencode#2456 SC-9 (plan-03 Item 9): undetermined-cycle ceiling — state
 # resolution. The cycle-counter state file is persisted ON DISK (survives
 # process exit) so the count carries across invocations. Resolution rules:
@@ -768,12 +839,16 @@ __undetermined_cycle_state_file() {
     fi
 }
 
-# .opencode#2456 SC-9: undetermined-cycle counter. Increments the persisted
-# counter ONLY when the determination record at <artifact_dir> carries
-# classification: undetermined — non-undetermined determinations permit
-# continuation and never touch the counter. The increment runs under the
-# EXISTING flock discipline (tmp/.behavior-run.lock, flocked exclusive in a
-# subshell so the fd is released on exit) — no new locking scheme.
+# .opencode#2456 SC-9 (lock domain re-scoped by .opencode#2649 R-1/R-2):
+# undetermined-cycle counter. Increments the persisted counter ONLY when the
+# determination record at <artifact_dir> carries classification: undetermined
+# — non-undetermined determinations permit continuation and never touch the
+# counter. The increment serializes on the counter's OWN lock domain — a
+# dedicated lock file next to the state file (${state_file}.lock, flocked
+# exclusive in a subshell so the fd is released on exit) — NEVER against the
+# run loop's tmp/.behavior-run.lock (the shared run-loop lock inflates
+# halt-class latency when the counting path contends on it; .opencode#2649
+# defect 1). The ceiling gate's read/clear paths use the same domain.
 __count_undetermined_cycle() {
     local artifact_dir="$1"
     local det="$artifact_dir/determination.yaml"
@@ -792,13 +867,13 @@ __count_undetermined_cycle() {
     mkdir -p "$(dirname "$state_file")"
     (
         flock -x -w 30 9 || {
-            echo "HARNESS_FAILURE: lock contention acquiring $PARENT_REPO_DIR/tmp/.behavior-run.lock for the undetermined-cycle counter (waited 30s)" >&2
+            echo "HARNESS_FAILURE: lock contention acquiring ${state_file}.lock for the undetermined-cycle counter (waited 30s)" >&2
             return 1
         }
         SC9_CUR=$(cat "$state_file" 2>/dev/null || echo 0)
         case "$SC9_CUR" in ''|*[!0-9]*) SC9_CUR=0 ;; esac
         echo $((SC9_CUR + 1)) > "$state_file"
-    ) 9>>"$PARENT_REPO_DIR/tmp/.behavior-run.lock"
+    ) 9>>"${state_file}.lock"
     return $?
 }
 
@@ -816,13 +891,34 @@ __undetermined_ceiling_check() {
     local artifact_dir="$1"
     local state_file
     state_file=$(__undetermined_cycle_state_file "$artifact_dir")
-    if [ -f "${state_file}.developer-cleared" ]; then
-        echo 0 > "$state_file"
+    # Read/clear under the counter's own lock domain (.opencode#2649 R-1/R-2
+    # edge case: the state file's lock domain covers the counting increment
+    # and the gate/ceiling-clear paths alike). Output contract: the last line
+    # is the persisted count; the single "__CLEARED__" marker line may
+    # precede it when the developer-remediation marker was observed.
+    mkdir -p "$(dirname "$state_file")"
+    local out
+    out=$(
+        (
+            flock -x -w 30 7 || {
+                echo "HARNESS_FAILURE: lock contention acquiring ${state_file}.lock for the undetermined-ceiling gate (waited 30s)" >&2
+                return 1
+            }
+            if [ -f "${state_file}.developer-cleared" ]; then
+                echo 0 > "$state_file"
+                echo "__CLEARED__"
+            fi
+            local count
+            count=$(cat "$state_file" 2>/dev/null || echo 0)
+            case "$count" in ''|*[!0-9]*) count=0 ;; esac
+            echo "$count"
+        ) 7>>"${state_file}.lock"
+    ) || { echo "$out" >&2; return 1; }
+    local count
+    count=$(printf '%s\n' "$out" | tail -1)
+    if printf '%s\n' "$out" | grep -q '^__CLEARED__$'; then
         return 0
     fi
-    local count
-    count=$(cat "$state_file" 2>/dev/null || echo 0)
-    case "$count" in ''|*[!0-9]*) count=0 ;; esac
     if [ "$count" -ge "$UNDETERMINED_CYCLE_CEILING" ]; then
         echo "FATAL: CEILING_REACHED mechanical block — persisted undetermined-cycle counter at ${count} of ceiling ${UNDETERMINED_CYCLE_CEILING} (state file ${state_file}); undetermined retries are blocked. The block persists until developer-level remediation (create ${state_file}.developer-cleared to authorize the clearance, or remove the state file manually)." >&2
         return 1
@@ -882,11 +978,15 @@ __record_orchestrator_decision() {
     # terminate-with-root-cause whose root_cause names the diagnosed cause —
     # a continue-new-dispatch on such a record is REJECTED with a validation
     # error naming the missing diagnosis (timer-escalation re-dispatch without
-    # diagnosis is prohibited, R-9). The gate rewrites the decision to the
-    # diagnosis-derived terminate-with-root-cause and records the diagnosed
-    # root cause. Records without an identified cause keep the existing
-    # value-set behavior (SC-7 unchanged); the SC-8 gate reads these records
-    # unchanged (backward compatible).
+    # diagnosis is prohibited, R-9). .opencode#2649 R-4: the gate VALIDATES
+    # the orchestrator-recorded decision — it rejects a non-diagnosis
+    # continue-new-dispatch and a terminate-with-root-cause whose root_cause
+    # does not name the diagnosed cause — and NEVER rewrites a decision
+    # variable or synthesizes a decision/root_cause value; accepted decisions
+    # are appended byte-identical to what the orchestrator entered. Records
+    # without an identified cause keep the existing value-set behavior (SC-7
+    # unchanged); the SC-8 gate reads these records unchanged (backward
+    # compatible).
     local sc13_class
     sc13_class="$(grep -E '^  classification: ' "$det" | head -1 | sed 's/^  classification: //' || true)"
     case "$sc13_class" in
@@ -914,13 +1014,22 @@ __record_orchestrator_decision() {
                 fi
             fi
             if [ -n "$sc13_cause" ]; then
+                # .opencode#2649 R-4: the gate VALIDATES, never rewrites or
+                # authors. Rejections return non-zero with a validation error
+                # and append no entry (the entered values are never modified,
+                # machine-synthesized decision/root_cause strings are gone).
                 if [ "$decision" = "continue-new-dispatch" ]; then
-                    echo "VALIDATION-ERROR: continue-new-dispatch REJECTED on the non-progressing record (classification '${sc13_class}') — the run evidence carries an identifiable external cause (${sc13_cause}) and the decision names no diagnosis; timer-escalation re-dispatch without diagnosis is prohibited (SC-13/R-9, .opencode#2456). Recording the diagnosis-derived terminate-with-root-cause decision instead." >&2
-                elif [ -n "$root_cause" ] && ! printf '%s' "$root_cause" | grep -qiE 'orphan|left[ -]running|quota|spending limit|rate.?limit|provider'; then
-                    echo "VALIDATION-ERROR: terminate-with-root-cause root_cause does not name the diagnosed external cause (${sc13_cause}) — a generic exit-code restatement is not diagnosis-derived (SC-13, .opencode#2456). Recording the diagnosed root cause instead." >&2
+                    echo "VALIDATION-ERROR: continue-new-dispatch REJECTED on the non-progressing record (classification '${sc13_class}') — the run evidence carries an identifiable external cause (${sc13_cause}) and the decision names no diagnosis; timer-escalation re-dispatch without diagnosis is prohibited (SC-13/R-9, .opencode#2456). Record the diagnosis-derived terminate-with-root-cause decision through this surface instead." >&2
+                    return 1
+                elif [ -z "$root_cause" ]; then
+                    echo "VALIDATION-ERROR: terminate-with-root-cause on the non-progressing record (classification '${sc13_class}') requires a diagnosis-derived root cause — the run evidence carries an identifiable external cause (${sc13_cause}) and the decision carries none (SC-13, .opencode#2456)." >&2
+                    return 1
+                elif ! printf '%s' "$root_cause" | grep -qiE 'orphan|left[ -]running|quota|spending limit|rate.?limit|provider'; then
+                    echo "VALIDATION-ERROR: terminate-with-root-cause root_cause does not name the diagnosed external cause (${sc13_cause}) — a generic exit-code restatement is not diagnosis-derived (SC-13, .opencode#2456). Re-record the decision with the diagnosed cause as the root cause." >&2
+                    return 1
                 fi
-                decision="terminate-with-root-cause"
-                root_cause="diagnosed external cause: ${sc13_cause} (run evidence: monitor.log/stdout.log/stderr.log of ${artifact_dir})"
+                # Diagnosis-named terminate-with-root-cause: accepted as
+                # entered — appended byte-identical below.
             fi
             ;;
     esac
@@ -2283,23 +2392,19 @@ MANIFESTEOF
         __undetermined_ceiling_check "$artifact_dir" || {
             return 1
         }
-        # .opencode#2456 SC-7: orchestrator decision-record write path. After
-        # the halt-class notification (SC-6) the orchestrator decision point
-        # occurred; the entry mechanism records the decision the run's
-        # verified outcome supports — the left-running run completing
-        # naturally records continue-new-dispatch; a failed run records
-        # terminate-with-root-cause with the run-outcome root cause. The
-        # value-set is validated by __record_orchestrator_decision, and the
-        # appended entry is what the SC-8 gate reads. The decision happens
-        # OUTSIDE the monitored run — this is the harness's entry mechanism,
-        # exercised after the halt-class path.
+        # .opencode#2649 R-3: machine run-outcome observation. After the
+        # halt-class notification (SC-6) the harness records the run outcome
+        # (exit code + evidence pointers) as MACHINE OBSERVATION content on
+        # the record's run_outcome_observations list. Machine paths never
+        # author, derive, or rewrite an orchestrator decision value — the
+        # orchestrator_decisions list awaits an actual orchestrator-recorded
+        # entry made through __record_orchestrator_decision (the SC-7
+        # orchestrator surface, unchanged). The §10.7 SC-8 resume gate reads
+        # the record unchanged: a resume on a halt-class record waits for
+        # the orchestrator's actual decision — the intended surface.
         local sc7_poll_log="$BEHAVIOR_LOG_DIR/$scenario_name/monitor-attempt${attempt}.log"
         if grep -q "MONITOR-HALTED" "$sc7_poll_log" 2>/dev/null; then
-            if [ "$exit_code" = "0" ]; then
-                __record_orchestrator_decision "$artifact_dir" --decision continue-new-dispatch || true
-            else
-                __record_orchestrator_decision "$artifact_dir" --decision terminate-with-root-cause --root-cause "run exit_code=${exit_code} after the halt-class notification (monitor halted per SC-6); outcome evidence in stdout.log/stderr.log of $artifact_dir" || true
-            fi
+            __record_run_outcome "$artifact_dir" "$exit_code" || true
         fi
         # .opencode#2646 R-4: resume-on-cap-hit — placed AFTER the
         # determination record and (on the halt-class path) the orchestrator
