@@ -1,6 +1,6 @@
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
 <!-- SPDX-License-Identifier: MIT -->
-<!-- Provenance: AI-authored, .opencode#2490; #2518/#2525 authorization anchors; #1011 dispatch-scope containment; decision-loop counterweight clauses, .opencode#2670; agent-owned scoped branch rewrite + whole-card discipline conversion, .opencode#2665; issues-data exception, .opencode#2681 -->
+<!-- Provenance: AI-authored, .opencode#2490; .opencode#2518/#2525 authorization anchors; #1011 dispatch-scope containment; decision-loop counterweight clauses, .opencode#2670; agent-owned scoped branch rewrite + whole-card discipline conversion, .opencode#2665; issues-data exception, .opencode#2681; build-tooling exclusivity rule, .opencode#2654 -->
 
 # Agent Floor
 
@@ -169,5 +169,17 @@ exception, evidence-backed (~27,700 historically ungoverned deck edits).
 - No production data access without explicit instruction in the current session.
 - Fact-decidable rules may be enforced mechanically; intent-decidable ones are
   never scripted — judgment decides, mechanisms verify facts only.
+- Build-tooling exclusivity: build and test run only through the root repo's
+  own build framework — its `./gradlew` wrapper for Gradle repos, or the
+  repo's documented wrapper/framework generally. Alternative distributions,
+  sibling wrappers, and ad-hoc binary invocations of build tooling are
+  prohibited — for any reason, including making a broken task work; no
+  utterance authorizes them. A verified failure of the sanctioned workflow is
+  handled by report-with-evidence-and-halt (cannot-continue state) or routing
+  to the owning ticket — never by invoking a different build toolchain.
+  Vendored non-build tooling (`.tools/z3` for formal tooling, the
+  per-project `.tools/node/` the playwright-cli card vendors) is the
+  sanctioned analysis/browser/CLI class and is not a build framework; its
+  precedent does not license vendored build tooling.
 
 🤖 Co-authored with AI: OpenCode (huggingface/zai-org/GLM-5.3-Flash)

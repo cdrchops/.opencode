@@ -1,6 +1,6 @@
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
 <!-- SPDX-License-Identifier: MIT -->
-<!-- Provenance: AI-authored, .opencode#2490 (restructured from the pre-rip reference, tag pre-rip); #2557 build-verification row + language/toolchain row; submodule execution boundary, .opencode#2563; #2551 test-value gate at the RED step; test-quality rows, .opencode#2601; docs-currentness step, .opencode#2670; issues-data remediation-first clause in suite-green, .opencode#2681; verify-pass gloss retirement, .opencode#2660 -->
+<!-- Provenance: AI-authored, .opencode#2490 (restructured from the pre-rip reference, tag pre-rip); #2557 build-verification row + language/toolchain row; submodule execution boundary, .opencode#2563; #2551 test-value gate at the RED step; test-quality rows, .opencode#2601; docs-currentness step, .opencode#2670; issues-data remediation-first clause in suite-green, .opencode#2681; verify-pass gloss retirement, .opencode#2660; build-tooling exclusivity restatement, .opencode#2654 -->
 
 # Implementation Workflow Reference
 
@@ -26,6 +26,18 @@ submodule's own build tooling (its test runner, gates, or quality bars)
 directly — foreign verification machinery enforces or silently skips
 standards it does not own. The parent's own suite is the gate; the submodule
 evolves its CI on its own tracker.
+
+This exclusivity holds in the general work cycle, whichever repo shape the
+change lands in: the change's repo's own build framework (its documented
+wrapper/framework — for Gradle repos, the `./gradlew` wrapper) is the
+exclusive build toolchain, and the framework's own verified failure does not
+open a foreign-toolchain route — no alternative distribution, sibling
+wrapper, or ad-hoc binary invocation, for any reason, including making a
+broken task work (the floor's Build-tooling exclusivity rule). A verified
+failure of the sanctioned workflow is handled by report-with-evidence-and-halt
+(a cannot-continue state) or routing to the owning ticket — never by invoking
+a different build toolchain. This completes this reference's escalation rule
+below rather than replacing it.
 
 ## RED-GREEN chain (per plan item / SC)
 
