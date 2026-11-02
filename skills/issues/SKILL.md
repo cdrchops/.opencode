@@ -7,7 +7,7 @@ provenance: AI-authored, .opencode#2490; tooling contract consolidated per .open
 
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
 <!-- SPDX-License-Identifier: MIT -->
-<!-- Provenance: AI-authored, .opencode#2490; .opencode#2543; .opencode#2561 verified-resolved closure; ticket-state hygiene, .opencode#2563; mirror-repair + pointer check, .opencode#2597; local/remote boundary + §7 routing correction, .opencode#2382; recomposition protocol, .opencode#2661 -->
+<!-- Provenance: AI-authored, .opencode#2490; .opencode#2543; .opencode#2561 verified-resolved closure; ticket-state hygiene, .opencode#2563; mirror-repair + pointer check, .opencode#2597; local/remote boundary + §7 routing correction, .opencode#2382; recomposition protocol, .opencode#2661; self-triggering triage, .opencode#2699 -->
 
 # issues — issue operations
 
@@ -97,7 +97,14 @@ provenance: AI-authored, .opencode#2490; tooling contract consolidated per .open
      review shape, and closure.
 5. **Closure.** Issue closure follows delivered work (post-merge cleanup), an
    evidence-backed verified-resolved/moot triage verdict, or explicit
-   developer instruction — never closure to tidy up. A verdict-backed closure
+   developer instruction — never closure to tidy up. The triage path is
+   self-triggering: when a ticket's deliverables are verifiably complete on
+   dated evidence (executed instrument outputs matching the ticket's
+   success-criteria outcomes) and the developer names that state or asks why
+   the ticket remains open, the agent runs the evidence-backed triage and
+   reconciles the tracker to the verdict in the same workflow — it does not
+   re-explain the closure gate and wait. The closure bar is executed
+   evidence; closure to tidy up stays prohibited. A verdict-backed closure
    reconciles the remote tracker to the same closed state in the same
    workflow; the local store is authoritative (#2561).
 6. **Ticket-state hygiene.** A stale ticket state — the local store mirror's

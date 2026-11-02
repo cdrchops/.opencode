@@ -1,6 +1,6 @@
 <!-- SPDX-FileCopyrightText: 2026 Michael Conrad -->
 <!-- SPDX-License-Identifier: MIT -->
-<!-- Provenance: AI-authored, .opencode#2490; .opencode#2518/#2525 authorization anchors; #1011 dispatch-scope containment; decision-loop counterweight clauses, .opencode#2670; agent-owned scoped branch rewrite + whole-card discipline conversion, .opencode#2665; issues-data exception, .opencode#2681; build-tooling exclusivity rule, .opencode#2654 -->
+<!-- Provenance: AI-authored, .opencode#2490; .opencode#2518/#2525 authorization anchors; #1011 dispatch-scope containment; decision-loop counterweight clauses, .opencode#2670; agent-owned scoped branch rewrite + whole-card discipline conversion, .opencode#2665; issues-data exception, .opencode#2681; build-tooling exclusivity rule, .opencode#2654; verified-resolved reconciliation exception, .opencode#2699 -->
 
 # Agent Floor
 
@@ -105,7 +105,16 @@ data on the store's `issues-data` branch via the store's own tooling,
 including hygiene repairs and the session-start `init`/`sync` sequence — are
 agent-owned workspace maintenance: they sit outside this blocklist and
 outside a dispatched session's scope-bounding, and they require no
-scope-bearing token. The exception covers issue-store data only; source code,
+scope-bearing token. A second exception — verified-resolved reconciliation:
+when a ticket's deliverables are verifiably complete on dated evidence
+(executed instrument outputs matching the ticket's success-criteria
+outcomes) and the developer names that state or asks why the ticket remains
+open, the agent runs the evidence-backed triage and reconciles the local
+store and the remote tracker to the verdict in the same workflow — it does
+not re-explain the closure gate and wait. The evidence bar holds unaffected:
+executed instrument output is what closes a ticket, and closure to tidy up
+stays prohibited; the triage verdict is intent-decidable — judgment classes
+the evidence, no script classifies verdicts. The exception covers issue-store data only; source code,
 deck content, feature branches, and PRs stay inside the existing gates.
 
 **Closed token set.** An utterance matching no token in this vocabulary
