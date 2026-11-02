@@ -147,6 +147,51 @@ __artifact_dir() {
     echo "$dir"
 }
 
+# Two-SC manifest recording (.opencode#2650, R-1/R-2): pass-idempotent
+# recording of the two-turn exchange shape into a scenario artifact's
+# manifest.yaml. Repeated recording invocations against one artifact
+# directory keep `two_turn` and `turn2_resumed_home` at one occurrence each
+# (latest invocation's value) and preserve every other key and value the
+# previous manifest carries (base heredoc keys, the `resumed_after_cap_hit`
+# marker appended at the line-2273 cap-hit path). An annotation argument
+# appends exactly one entry per invocation to the `tail_materialization_passes`
+# list key; no annotation adds no entry and no list key. Assumes the
+# manifest is flat (scalars and this helper's own list block) — the
+# rewrite's exclusion patterns bound to that shape (both two-SC scripts'
+# artifacts, the only call sites).
+__record_two_turn_manifest() {
+    local artifact_dir="$1"
+    local test_home="$2"
+    local annotation="${3:-}"
+    local manifest="$artifact_dir/manifest.yaml"
+    local tmp="$artifact_dir/manifest.yaml.tmp"
+    local passes_entries=()
+    if [ -f "$manifest" ]; then
+        mapfile -t passes_entries < <(
+            awk '/^tail_materialization_passes:/{in_list=1; next} /^[^ ]/{in_list=0} in_list && /^  - /{print}' "$manifest"
+        )
+    fi
+    {
+        if [ -f "$manifest" ]; then
+            grep -v -e '^two_turn:' -e '^turn2_resumed_home:' \
+                -e '^tail_materialization_passes:' -e '^  - ' \
+                "$manifest" 2>/dev/null || true
+        fi
+        echo "two_turn: true"
+        echo "turn2_resumed_home: $test_home"
+        if [ "${#passes_entries[@]}" -gt 0 ] || [ -n "$annotation" ]; then
+            echo "tail_materialization_passes:"
+            local entry
+            for entry in "${passes_entries[@]}"; do
+                printf '  - %s\n' "${entry#  - }"
+            done
+            if [ -n "$annotation" ]; then
+                printf '  - %s\n' "$annotation"
+            fi
+        fi
+    } > "$tmp" && mv "$tmp" "$manifest"
+}
+
 __export_sqlite_to_yaml() {
     local yaml_output_file="$1"
     local stdout_file="${2:-}"

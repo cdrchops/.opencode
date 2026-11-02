@@ -158,11 +158,10 @@ fi
 __export_sqlite_to_yaml "$artifact_dir/session.yaml" "$turn2_stdout" "$turn2_stderr"
 
 # Manifest: record the two-turn shape so the evaluator reads it as one exchange.
-{
-    cat "$artifact_dir/manifest.yaml" 2>/dev/null || true
-    echo "two_turn: true"
-    echo "turn2_resumed_home: $test_home"
-    [ -n "${SC8_SKIP_TURN2:-}" ] && echo "tail_materialization_pass: true (turn 2 ran in a prior pass; this pass resumed the capped session to commit/push/PR)"
-} > "$artifact_dir/manifest.yaml.tmp" && mv "$artifact_dir/manifest.yaml.tmp" "$artifact_dir/manifest.yaml"
+# Pass-idempotent recording (shared helper, .opencode#2650): a recovery pass
+# re-recording this artifact never accumulates duplicate keys; the skip-turn2
+# materialization annotation lands as one entry per invocation on the
+# tail_materialization_passes list.
+__record_two_turn_manifest "$artifact_dir" "$test_home" "${SC8_SKIP_TURN2:+true (turn 2 ran in a prior pass; this pass resumed the capped session to commit/push/PR)}"
 
 exit 0
